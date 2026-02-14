@@ -1,0 +1,4 @@
+repository "xenobiosfera/xenobiosfera@7972500129761@cloud"
+  path "/"
+    br "/main"
+    co "/main"
