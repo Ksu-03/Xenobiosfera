@@ -455,7 +455,16 @@
 "Assets/Materials/Standard Assets/Vehicles/Car/Scripts/SkidTrail.cs"
 "Assets/Materials/Standard Assets/Vehicles/Car/Scripts/Suspension.cs"
 "Assets/Materials/Standard Assets/Vehicles/Car/Scripts/WheelEffects.cs"
+"Assets/Skript/Allian.cs"
 "Assets/Skript/DayNightCycle.cs"
+"Assets/Skript/Death.cs"
+"Assets/Skript/EnergyReill.cs"
+"Assets/Skript/HP.cs"
+"Assets/Skript/HUDManager.cs"
+"Assets/Skript/OxygenRefill.cs"
+"Assets/Skript/PlayerController.cs"
+"Assets/Skript/PlayerStates.cs"
+"Assets/Skript/PlayerStats.cs"
 -langversion:9.0
 /deterministic
 /optimize+
