@@ -55,6 +55,8 @@ public class PlayerStats : MonoBehaviour
 
     void Update()
     {
+        energy.currentValue -= 1 * Time.deltaTime;//бпелеммн
+        energy.currentValue = Math.Clamp(energy.currentValue, 0, energy.maxValue);
         UpdateOxygen();
         UpdateEnergy();
     }

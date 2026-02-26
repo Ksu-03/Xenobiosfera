@@ -31,8 +31,8 @@ public class OxygenRefill : MonoBehaviour
                 else
                 {
                     // Опционально: отключаем коллайдер на время перезарядки
-                    // GetComponent<Collider>().enabled = false;
-                    // Invoke(nameof(EnableCollider), 5f); // включить через 5 сек
+                     GetComponent<Collider>().enabled = false;
+                     Invoke(nameof(EnableCollider), 5f); // включить через 5 сек
                 }
 
                 Debug.Log($"Игрок пополнил кислород на {refillAmount} от {gameObject.name}");

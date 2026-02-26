@@ -24,7 +24,7 @@ public class EnergyReill : MonoBehaviour
                     Destroy(gameObject);
                 }
 
-                Debug.Log($"Игрок пополнил энергию на {refillAmount} от {gameObject.name}");
+                Debug.Log($"энергия на {refillAmount} от {gameObject.name}");
             }
         }
     }
