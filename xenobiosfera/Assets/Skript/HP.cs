@@ -17,6 +17,7 @@ public class HP : MonoBehaviour
         if (other.gameObject.tag == "Enemy")
         {
             Health -= 10;
+           
         }
     }
 }

@@ -12,12 +12,14 @@ GameObject:
   - component: {fileID: 6762288855743196003}
   - component: {fileID: 8893683340962074390}
   - component: {fileID: 2617689549744860636}
+  - component: {fileID: 1510565217531997231}
+  - component: {fileID: 5343295695652479358}
   m_Layer: 0
   m_Name: Capsule
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
+  m_StaticEditorFlags: 8
   m_IsActive: 1
 --- !u!4 &8059726212804741849
 Transform:
@@ -28,7 +30,7 @@ Transform:
   m_GameObject: {fileID: 1977470685450023130}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 38.802074, y: 1.97, z: 44.28}
+  m_LocalPosition: {x: 727, y: -254, z: -3474}
   m_LocalScale: {x: 0.63475114, y: 0.63475114, z: 0.63475114}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -99,7 +101,7 @@ CapsuleCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 2
@@ -107,3 +109,41 @@ CapsuleCollider:
   m_Height: 2
   m_Direction: 1
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &1510565217531997231
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1977470685450023130}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2a0fdee51cbd75f4fbcb75e6bc21e30e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  oxygenAmount: 50
+  energyAmount: 30
+  pickupMessage: "+\u041A\u0438\u0441\u043B\u043E\u0440\u043E\u0434!"
+  messageColor: {r: 0, g: 1, b: 0, a: 1}
+  showMessage: 1
+  pickupEffect: {fileID: 0}
+  pickupSound: {fileID: 0}
+  playerTag: Player
+  destroyOnPickup: 1
+  respawnTime: 0
+--- !u!114 &5343295695652479358
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1977470685450023130}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1c810a1cbe4edaa42be426b05dbfec74, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  textPrefab: {fileID: 0}
+  canvas: {fileID: 0}
+  textDuration: 1.5
+  floatSpeed: 50

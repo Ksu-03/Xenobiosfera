@@ -1,19 +1,17 @@
-using System.Collections;
+п»їusing System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System;
 
 public class PlayerStats : MonoBehaviour
 {
-
-
     [System.Serializable]
     public class Stat
     {
         public float currentValue;
         public float maxValue;
-        public float drainRate;     // скорость траты в секунду
-        public float regenRate;     // скорость восстановления в секунду
+        public float drainRate;     // СЃРєРѕСЂРѕСЃС‚СЊ С‚СЂР°С‚С‹ РІ СЃРµРєСѓРЅРґСѓ
+        public float regenRate;     // СЃРєРѕСЂРѕСЃС‚СЊ РІРѕСЃСЃС‚Р°РЅРѕРІР»РµРЅРёСЏ РІ СЃРµРєСѓРЅРґСѓ
 
         public void Update(bool isDraining)
         {
@@ -29,68 +27,105 @@ public class PlayerStats : MonoBehaviour
         }
     }
 
-    [Header("Основные показатели")]
+    [Header("РћСЃРЅРѕРІРЅС‹Рµ РїРѕРєР°Р·Р°С‚РµР»Рё")]
     public Stat oxygen = new Stat() { currentValue = 100, maxValue = 100, drainRate = -1f, regenRate = 0f };
     public Stat energy = new Stat() { currentValue = 100, maxValue = 100, drainRate = -0.5f, regenRate = 0f };
 
-    [Header("Условия")]
+    [Header("РЈСЃР»РѕРІРёСЏ")]
     public bool isRunning = false;
+    public bool isDead = false;
 
-    [Header("События")]
-    public Action OnOxygenEmpty;    // используем System.Action
-    public Action OnEnergyEmpty;    // используем System.Action
+    [Header("РЎРјРµСЂС‚СЊ")]
+    public GameObject deathEffect;
+    public float respawnTime = 3f;
+    public Vector3 respawnPosition = Vector3.zero;
+
+    [Header("Р—РІСѓРєРё")]
+    public AudioClip deathSound;
+    public AudioClip oxygenAlarmSound;
+    public AudioClip energyAlarmSound;
+
+    [Header("РЎРѕР±С‹С‚РёСЏ")]
+    public Action OnOxygenEmpty;
+    public Action OnEnergyEmpty;
+    public Action OnPlayerDeath;
 
     private PlayerController playerController;
+    private AudioSource audioSource;
+    private bool oxygenAlarmPlaying = false;
+    private bool energyAlarmPlaying = false;
 
     void Start()
     {
         playerController = GetComponent<PlayerController>();
+        audioSource = GetComponent<AudioSource>();
+        if (audioSource == null)
+            audioSource = gameObject.AddComponent<AudioSource>();
 
-        // Проверка на наличие PlayerController (не критично, если нет)
-        if (playerController == null)
-        {
-            Debug.Log("PlayerStats: PlayerController не найден - это нормально, если вы его еще не добавили");
-        }
+        respawnPosition = transform.position;
     }
 
     void Update()
     {
-        energy.currentValue -= 1 * Time.deltaTime;//ВРЕМЕННО
-        energy.currentValue = Math.Clamp(energy.currentValue, 0, energy.maxValue);
+        if (isDead) return; // РµСЃР»Рё РјРµСЂС‚РІС‹ - РЅРёС‡РµРіРѕ РЅРµ РґРµР»Р°РµРј
+
         UpdateOxygen();
         UpdateEnergy();
+
+        // РџСЂРѕРІРµСЂРєР° РЅР° СЃРјРµСЂС‚СЊ
+        CheckDeathConditions();
     }
 
     void UpdateOxygen()
     {
-        // Базовая трата
+        // Р‘Р°Р·РѕРІР°СЏ С‚СЂР°С‚Р°
         oxygen.Update(true);
 
-        // При беге тратится в 2 раза быстрее
+        // РџСЂРё Р±РµРіРµ С‚СЂР°С‚РёС‚СЃСЏ РІ 2 СЂР°Р·Р° Р±С‹СЃС‚СЂРµРµ
         if (isRunning)
         {
             oxygen.currentValue = Mathf.Clamp(oxygen.currentValue + oxygen.drainRate * Time.deltaTime, 0, oxygen.maxValue);
         }
 
+        // Р—РІСѓРє С‚СЂРµРІРѕРіРё РїСЂРё РЅРёР·РєРѕРј РєРёСЃР»РѕСЂРѕРґРµ
+        if (oxygen.currentValue < 20 && !oxygenAlarmPlaying && oxygenAlarmSound != null)
+        {
+            audioSource.PlayOneShot(oxygenAlarmSound);
+            oxygenAlarmPlaying = true;
+        }
+        else if (oxygen.currentValue >= 20)
+        {
+            oxygenAlarmPlaying = false;
+        }
+
         if (oxygen.IsEmpty())
         {
             OnOxygenEmpty?.Invoke();
-            Debug.Log("Кислород закончился!");
         }
     }
 
     void UpdateEnergy()
     {
-        // Тратится только при беге
+        // РўСЂР°С‚РёС‚СЃСЏ С‚РѕР»СЊРєРѕ РїСЂРё Р±РµРіРµ
         if (isRunning)
         {
             energy.Update(true);
         }
 
+        // Р—РІСѓРє С‚СЂРµРІРѕРіРё РїСЂРё РЅРёР·РєРѕР№ СЌРЅРµСЂРіРёРё
+        if (energy.currentValue < 20 && !energyAlarmPlaying && energyAlarmSound != null)
+        {
+            audioSource.PlayOneShot(energyAlarmSound);
+            energyAlarmPlaying = true;
+        }
+        else if (energy.currentValue >= 20)
+        {
+            energyAlarmPlaying = false;
+        }
+
         if (energy.IsEmpty())
         {
             OnEnergyEmpty?.Invoke();
-            Debug.Log("Энергия закончилась!");
 
             if (playerController != null)
                 playerController.canRun = false;
@@ -102,17 +137,93 @@ public class PlayerStats : MonoBehaviour
         }
     }
 
-    // Пополнение кислорода (вызывается из триггера)
+    void CheckDeathConditions()
+    {
+        // РЎРјРµСЂС‚СЊ РѕС‚ РЅРµС…РІР°С‚РєРё РєРёСЃР»РѕСЂРѕРґР°
+        if (oxygen.IsEmpty())
+        {
+            Die("РљРёСЃР»РѕСЂРѕРґ Р·Р°РєРѕРЅС‡РёР»СЃСЏ!");
+        }
+        // РњРѕР¶РЅРѕ РґРѕР±Р°РІРёС‚СЊ РґСЂСѓРіРёРµ СѓСЃР»РѕРІРёСЏ СЃРјРµСЂС‚Рё
+        // if (health.IsEmpty()) Die("Р—РґРѕСЂРѕРІСЊРµ РЅР° РЅСѓР»Рµ!");
+    }
+
+void Die(string reason)
+    {
+        if (isDead) return;
+
+        isDead = true;
+        Debug.Log($"РЎРјРµСЂС‚СЊ: {reason}");
+
+        // РћС‚РєР»СЋС‡Р°РµРј СѓРїСЂР°РІР»РµРЅРёРµ
+        if (playerController != null)
+            playerController.enabled = false;
+
+        // РћС‚РєР»СЋС‡Р°РµРј РєРѕР»Р»Р°Р№РґРµСЂ
+        GetComponent<Collider>().enabled = false;
+
+        // Р­С„С„РµРєС‚ СЃРјРµСЂС‚Рё
+        if (deathEffect != null)
+            Instantiate(deathEffect, transform.position, Quaternion.identity);
+
+        // Р—РІСѓРє СЃРјРµСЂС‚Рё
+        if (deathSound != null)
+            AudioSource.PlayClipAtPoint(deathSound, transform.position);
+
+        // Р’С‹Р·С‹РІР°РµРј СЃРѕР±С‹С‚РёРµ
+        OnPlayerDeath?.Invoke();
+
+        // Р—Р°РїСѓСЃРєР°РµРј СЂРµСЃРїР°РІРЅ
+        Invoke("Respawn", respawnTime);
+    }
+
+    void Respawn()
+    {
+        // Р’РѕСЃСЃС‚Р°РЅР°РІР»РёРІР°РµРј СЂРµСЃСѓСЂСЃС‹
+        oxygen.currentValue = oxygen.maxValue;
+        energy.currentValue = energy.maxValue;
+
+        // Р’РѕР·РІСЂР°С‰Р°РµРј РЅР° С‚РѕС‡РєСѓ СЂРµСЃРїР°РІРЅР°
+        transform.position = respawnPosition;
+
+        // Р’РєР»СЋС‡Р°РµРј РєРѕРјРїРѕРЅРµРЅС‚С‹
+        if (playerController != null)
+            playerController.enabled = true;
+
+        GetComponent<Collider>().enabled = true;
+
+        isDead = false;
+
+        Debug.Log("РРіСЂРѕРє РІРѕСЃРєСЂРµСЃ!");
+    }
+
     public void RestoreOxygen(float amount)
     {
         oxygen.currentValue = Mathf.Clamp(oxygen.currentValue + amount, 0, oxygen.maxValue);
-        Debug.Log($"Кислород пополнен: +{amount}");
+
+        // Р’СЃРїР»С‹РІР°СЋС‰РёР№ С‚РµРєСЃС‚
+        if (FloatingText.Instance != null)
+        {
+            FloatingText.Instance.ShowText(
+                $"+{amount} Oв‚‚",
+                transform.position + Vector3.up * 2,
+                Color.cyan
+            );
+        }
     }
 
-    // Пополнение энергии (вызывается из триггера)
     public void RestoreEnergy(float amount)
     {
         energy.currentValue = Mathf.Clamp(energy.currentValue + amount, 0, energy.maxValue);
-        Debug.Log($"Энергия пополнена: +{amount}");
+
+        // Р’СЃРїР»С‹РІР°СЋС‰РёР№ С‚РµРєСЃС‚
+        if (FloatingText.Instance != null)
+        {
+            FloatingText.Instance.ShowText(
+                $"+{amount} вљЎ",
+                transform.position + Vector3.up * 2,
+                Color.yellow
+            );
+        }
     }
 }

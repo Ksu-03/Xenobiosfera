@@ -464,6 +464,7 @@
 "Assets/Skript/DayNightCycle.cs"
 "Assets/Skript/Death.cs"
 "Assets/Skript/EnergyReill.cs"
+"Assets/Skript/FloatingText.cs"
 "Assets/Skript/HP.cs"
 "Assets/Skript/HUDManager.cs"
 "Assets/Skript/OxygenRefill.cs"
