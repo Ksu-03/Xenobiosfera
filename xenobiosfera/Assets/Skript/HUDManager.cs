@@ -3,8 +3,9 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
+
 public class HUDManager : MonoBehaviour
-{ 
+{
     [Header("Ссылка на игрока")]
     public PlayerStats playerStats;
 
@@ -12,74 +13,101 @@ public class HUDManager : MonoBehaviour
     public Slider oxygenSlider;
     public Slider energySlider;
 
-    [Header("Текстовые значения (опционально)")]
+    [Header("Текстовые значения")]
     public Text oxygenText;
     public Text energyText;
 
-    [Header("Цвета для слайдеров")]
+    [Header("Цвета")]
     public Color oxygenColor = Color.green;
     public Color energyColor = Color.yellow;
+    public Color criticalColor = Color.red;
+    public Color backgroundColor = new Color(0.2f, 0.2f, 0.2f);
 
-    [Header("Анимация при критических значениях")]
+    [Header("Критические значения")]
     public float criticalThreshold = 20f;
     public float blinkSpeed = 5f;
 
     private Image oxygenFill;
     private Image energyFill;
+    private Color originalOxygenColor;
+    private Color originalEnergyColor;
 
     void Start()
     {
         if (playerStats == null)
             playerStats = FindObjectOfType<PlayerStats>();
 
+        // Настройка слайдеров
         if (oxygenSlider != null)
+        {
+            oxygenSlider.maxValue = playerStats.maxOxygen;
             oxygenFill = oxygenSlider.fillRect.GetComponent<Image>();
+            if (oxygenFill != null)
+            {
+                oxygenFill.color = oxygenColor;
+                originalOxygenColor = oxygenColor;
+            }
+
+            // Настройка фона
+            SetBackgroundColor(oxygenSlider, backgroundColor);
+        }
 
         if (energySlider != null)
+        {
+            energySlider.maxValue = playerStats.maxEnergy;
             energyFill = energySlider.fillRect.GetComponent<Image>();
+            if (energyFill != null)
+            {
+                energyFill.color = energyColor;
+                originalEnergyColor = energyColor;
+            }
 
-        SetSliderMaxValues();
+            SetBackgroundColor(energySlider, backgroundColor);
+        }
     }
 
-    void SetSliderMaxValues()
+    void SetBackgroundColor(Slider slider, Color color)
     {
-        if (oxygenSlider != null) oxygenSlider.maxValue = playerStats.oxygen.maxValue;
-        if (energySlider != null) energySlider.maxValue = playerStats.energy.maxValue;
+        Transform background = slider.transform.Find("Background");
+        if (background != null)
+        {
+            Image bgImage = background.GetComponent<Image>();
+            if (bgImage != null)
+                bgImage.color = color;
+        }
     }
 
     void Update()
     {
         if (playerStats == null) return;
 
-        UpdateSlider(oxygenSlider, playerStats.oxygen.currentValue);
-        UpdateSlider(energySlider, playerStats.energy.currentValue);
+        // Обновляем значения
+        if (oxygenSlider != null)
+            oxygenSlider.value = playerStats.oxygen;
 
-        UpdateText(oxygenText, playerStats.oxygen.currentValue, playerStats.oxygen.maxValue, "O₂");
-        UpdateText(energyText, playerStats.energy.currentValue, playerStats.energy.maxValue, "⚡");
+        if (energySlider != null)
+            energySlider.value = playerStats.energy;
 
-        HandleCriticalStates();
+        // Обновляем текст
+        if (oxygenText != null)
+            oxygenText.text = $"O₂: {playerStats.oxygen:F0}/{playerStats.maxOxygen}";
+
+        if (energyText != null)
+            energyText.text = $"⚡: {playerStats.energy:F0}/{playerStats.maxEnergy}";
+
+        // Мигание при критическом уровне
+        UpdateCriticalStates();
     }
 
-    void UpdateSlider(Slider slider, float value)
+    void UpdateCriticalStates()
     {
-        if (slider != null)
-            slider.value = value;
-    }
-
-    void UpdateText(Text text, float current, float max, string prefix)
-    {
-        if (text != null)
-            text.text = $"{prefix}: {current:F0}/{max:F0}";
-    }
-
-    void HandleCriticalStates()
-    {
+        // Кислород
         if (oxygenFill != null)
         {
-            if (playerStats.oxygen.currentValue < criticalThreshold)
+            if (playerStats.oxygen < criticalThreshold)
             {
                 float alpha = (Mathf.Sin(Time.time * blinkSpeed) + 1) / 2;
-                oxygenFill.color = new Color(1, 0, 0, alpha);
+                oxygenFill.color = Color.Lerp(oxygenColor, criticalColor, alpha);
             }
             else
             {
@@ -87,12 +115,13 @@ public class HUDManager : MonoBehaviour
             }
         }
 
+        // Энергия
         if (energyFill != null)
         {
-            if (playerStats.energy.currentValue < criticalThreshold)
+            if (playerStats.energy < criticalThreshold)
             {
                 float alpha = (Mathf.Sin(Time.time * blinkSpeed) + 1) / 2;
-                energyFill.color = new Color(1, 0, 0, alpha);
+                energyFill.color = Color.Lerp(energyColor, criticalColor, alpha);
             }
             else
             {

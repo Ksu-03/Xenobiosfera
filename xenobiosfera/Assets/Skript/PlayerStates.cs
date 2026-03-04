@@ -71,13 +71,14 @@ public class PlayerStates : MonoBehaviour
             Debug.Log("Ёнерги€ закончилась!");
 
             if (playerController != null)
-                playerController.canRun = false;
+                playerController.canMove = false;
         }
         else
         {
             if (playerController != null)
-                playerController.canRun = true;
+                playerController.canMove = true;
         }
+        
     }
 
     public void RestoreOxygen(float amount)
