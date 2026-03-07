@@ -461,6 +461,7 @@
 "Assets/Materials/Standard Assets/Vehicles/Car/Scripts/Suspension.cs"
 "Assets/Materials/Standard Assets/Vehicles/Car/Scripts/WheelEffects.cs"
 "Assets/Skript/Allian.cs"
+"Assets/Skript/CubeSkript.cs"
 "Assets/Skript/DayNightCycle.cs"
 "Assets/Skript/Death.cs"
 "Assets/Skript/EnergyReill.cs"
