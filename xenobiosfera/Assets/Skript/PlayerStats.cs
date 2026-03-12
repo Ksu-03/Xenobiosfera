@@ -5,18 +5,26 @@ using System;
 
 public class PlayerStats : MonoBehaviour
 {
-    [Header("Показатели")]
+    [Header("Кислород")]
     public float oxygen = 100f;
     public float maxOxygen = 100f;
-    public float oxygenDrainRate = 1f; // кислород уходит всегда
+    public float oxygenDrainRate = 1f;
 
+    [Header("Энергия")]
     public float energy = 100f;
     public float maxEnergy = 100f;
-    public float energyDrainRate = 0.5f; // энергия уходит при движении
+    public float energyDrainRate = 0.5f;
+
+    [Header("Здоровье")] // Добавили здоровье
+    public float health = 100f;
+    public float maxHealth = 100f;
+
+    [Header("Респавн")]
+    public float respawnTime = 5f; // теперь 5 секунд (было 2)
+    public Vector3 respawnPosition;
 
     [Header("Состояние")]
     public bool isDead = false;
-    public Vector3 respawnPosition;
 
     private PlayerController playerController;
 
@@ -30,33 +38,55 @@ public class PlayerStats : MonoBehaviour
     {
         if (isDead) return;
 
-        // --- КИСЛОРОД (падает всегда) ---
+        // --- КИСЛОРОД ---
         oxygen -= oxygenDrainRate * Time.deltaTime;
         oxygen = Mathf.Clamp(oxygen, 0, maxOxygen);
 
-        // --- ЭНЕРГИЯ (падает при движении WASD) ---
-        float horizontal = Input.GetAxis("Horizontal"); // A и D
-        float vertical = Input.GetAxis("Vertical");     // W и S
+        // --- ЭНЕРГИЯ ---
+        float horizontal = Input.GetAxis("Horizontal");
+        float vertical = Input.GetAxis("Vertical");
 
-        // Если игрок движется в любую сторону
         if (Mathf.Abs(horizontal) > 0.1f || Mathf.Abs(vertical) > 0.1f)
         {
             energy -= energyDrainRate * Time.deltaTime;
-
-            // Для отладки (можно убрать потом)
-            // Debug.Log($"Энергия: {energy:F1}");
         }
 
         energy = Mathf.Clamp(energy, 0, maxEnergy);
 
-        // --- БЛОКИРОВКА ДВИЖЕНИЯ ПРИ 0 ЭНЕРГИИ ---
+       
         if (playerController != null)
         {
-            playerController.canMove = (energy > 0);
+            playerController.canMove = (energy > 0 && !isDead);
         }
 
-        // --- СМЕРТЬ ---
-        if (oxygen <= 0)
+        // --- ПРОВЕРКА НА СМЕРТЬ ---
+        if (oxygen <= 0 || health <= 0 || energy <= 0)
+        {
+            Die();
+        }
+    }
+
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other.gameObject.tag == "Enemy")
+        {
+            health -= 10;
+
+        }
+    }
+
+    // МЕТОД ДЛЯ ПОЛУЧЕНИЯ УРОНА - вызывать из мониторов
+    public void TakeDamage(float amount)
+    {
+        if (isDead) return;
+
+        health -= amount;
+        health = Mathf.Clamp(health, 0, maxHealth);
+
+        Debug.Log($"💔 Получен урон: {amount}, Здоровье: {health}");
+
+        // Проверка на смерть от урона
+        if (health <= 0)
         {
             Die();
         }
@@ -64,8 +94,10 @@ public class PlayerStats : MonoBehaviour
 
     void Die()
     {
+        if (isDead) return;
+
         isDead = true;
-        Debug.Log("💀 Персонаж умер (кислород кончился)");
+        Debug.Log("💀 ПЕРСОНАЖ УМЕР");
 
         // Отключаем управление
         if (playerController != null)
@@ -76,15 +108,16 @@ public class PlayerStats : MonoBehaviour
         if (col != null)
             col.enabled = false;
 
-        // Респавн через 2 секунды
-        Invoke("Respawn", 2f);
+        // Респавн через respawnTime секунд
+        Invoke("Respawn", respawnTime);
     }
 
     void Respawn()
     {
-        // Восстанавливаем ресурсы
+        // Восстанавливаем всё
         oxygen = maxOxygen;
         energy = maxEnergy;
+        health = maxHealth; // здоровье тоже восстанавливаем
 
         // Возвращаем на старт
         transform.position = respawnPosition;
@@ -98,10 +131,10 @@ public class PlayerStats : MonoBehaviour
             col.enabled = true;
 
         isDead = false;
-        Debug.Log("✨ Персонаж воскрес");
+        Debug.Log("✨ ПЕРСОНАЖ ВОСКРЕС");
     }
 
-    // Для капсул
+    // Методы для пополнения (капсулы)
     public void RestoreOxygen(float amount)
     {
         oxygen = Mathf.Clamp(oxygen + amount, 0, maxOxygen);
@@ -113,5 +146,10 @@ public class PlayerStats : MonoBehaviour
         energy = Mathf.Clamp(energy + amount, 0, maxEnergy);
         Debug.Log($"Энергия +{amount}");
     }
-}
 
+    public void RestoreHealth(float amount) // если будут аптечки
+    {
+        health = Mathf.Clamp(health + amount, 0, maxHealth);
+        Debug.Log($"Здоровье +{amount}");
+    }
+}

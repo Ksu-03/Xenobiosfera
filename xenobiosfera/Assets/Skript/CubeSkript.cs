@@ -5,43 +5,43 @@ using UnityEngine.UI;
 using UnityEngine.Rendering.PostProcessing;
 
 public class CubeSkript : MonoBehaviour
-{
-    [SerializeField] Text TextCountCubes;
-    [SerializeField] Text TakeCube;
-    [SerializeField] int countCubes;
+{ 
+    [Header("Настройки")]
+    public string playerTag = "Player";
+    public GameObject pickupEffect; // эффект при сборе (можно не ставить)
+    public AudioClip pickupSound; // звук при сборе (можно не ставить)
 
-    private void Start()
+    [Header("Визуал")]
+    public float rotationSpeed = 50f; // чтобы куб красиво крутился
+
+    void Update()
     {
-        countCubes = GameObject.FindGameObjectsWithTag("Cube").Length;
-        TakeCube.gameObject.SetActive(false);
+        // Просто красивое вращение
+        transform.Rotate(Vector3.up * rotationSpeed * Time.deltaTime);
     }
 
-    private void Update()
+    void OnTriggerEnter(Collider other)
     {
-        UpdateText();
-    }
-
-    void UpdateText()
-    {
-        TextCountCubes.text = "Cubs: " + countCubes;
-    }
-
-    private void OnTriggeraStay(Collider other)
-    {
-        if (other.CompareTag("Cube"))
+        if (other.CompareTag(playerTag))
         {
-            TakeCube.gameObject.SetActive(true);
-            if (Input.GetKeyDown(KeyCode.V))
+            // Находим менеджер игры и сообщаем о сборе
+            GameManager gameManager = FindObjectOfType<GameManager>();
+            if (gameManager != null)
             {
-                TakeCube.gameObject.SetActive(false);
-                Destroy(other.gameObject);
-                countCubes--;
+                gameManager.CollectCube();
             }
-        }
-    }
 
-    private void OnTriggerExit(Collider other)
-    {
-        TakeCube.gameObject.SetActive(false);
+            // Эффекты
+            if (pickupEffect != null)
+                Instantiate(pickupEffect, transform.position, Quaternion.identity);
+
+            if (pickupSound != null)
+                AudioSource.PlayClipAtPoint(pickupSound, transform.position);
+
+            // Уничтожаем куб
+            Destroy(gameObject);
+
+            Debug.Log("Куб собран!");
+        }
     }
 }
