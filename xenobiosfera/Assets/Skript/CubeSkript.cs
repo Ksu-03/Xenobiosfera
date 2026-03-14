@@ -1,47 +1,64 @@
-using System.Collections;
+п»їusing System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.Rendering.PostProcessing;
 
-public class CubeSkript : MonoBehaviour
-{ 
-    [Header("Настройки")]
+public class CollectibleCube : MonoBehaviour
+{
+    [Header("РќР°СЃС‚СЂРѕР№РєРё")]
     public string playerTag = "Player";
-    public GameObject pickupEffect; // эффект при сборе (можно не ставить)
-    public AudioClip pickupSound; // звук при сборе (можно не ставить)
+    public GameObject pickupEffect;
+    public AudioClip pickupSound;
 
-    [Header("Визуал")]
-    public float rotationSpeed = 50f; // чтобы куб красиво крутился
+    [Header("Р’РёР·СѓР°Р»")]
+    public float rotationSpeed = 50f;
+
+    private bool isCollected = false; // С„Р»Р°Рі, С‡С‚РѕР±С‹ СЃРѕР±СЂР°С‚СЊ С‚РѕР»СЊРєРѕ РѕРґРёРЅ СЂР°Р·
+
+    void Start()
+    {
+        if (string.IsNullOrEmpty(gameObject.tag))
+            gameObject.tag = "Cube";
+    }
 
     void Update()
     {
-        // Просто красивое вращение
         transform.Rotate(Vector3.up * rotationSpeed * Time.deltaTime);
     }
 
     void OnTriggerEnter(Collider other)
     {
+        // Р•СЃР»Рё СѓР¶Рµ СЃРѕР±СЂР°Р»Рё - РёРіРЅРѕСЂРёСЂСѓРµРј
+        if (isCollected) return;
+
         if (other.CompareTag(playerTag))
         {
-            // Находим менеджер игры и сообщаем о сборе
+            // РЎСЂР°Р·Сѓ СЃС‚Р°РІРёРј С„Р»Р°Рі, С‡С‚РѕР±С‹ РЅРµ СЃРѕР±СЂР°С‚СЊ РІС‚РѕСЂРѕР№ СЂР°Р·
+            isCollected = true;
+
             GameManager gameManager = FindObjectOfType<GameManager>();
             if (gameManager != null)
             {
                 gameManager.CollectCube();
             }
 
-            // Эффекты
             if (pickupEffect != null)
                 Instantiate(pickupEffect, transform.position, Quaternion.identity);
 
             if (pickupSound != null)
                 AudioSource.PlayClipAtPoint(pickupSound, transform.position);
 
-            // Уничтожаем куб
-            Destroy(gameObject);
+            // РћС‚РєР»СЋС‡Р°РµРј РєРѕР»Р»Р°Р№РґРµСЂ, С‡С‚РѕР±С‹ Р±РѕР»СЊС€Рµ РЅРµ СЃСЂР°Р±Р°С‚С‹РІР°Р»
+            GetComponent<Collider>().enabled = false;
 
-            Debug.Log("Куб собран!");
+            // РћС‚РєР»СЋС‡Р°РµРј РІРёР·СѓР°Р» (С‡С‚РѕР±С‹ РєСѓР± РёСЃС‡РµР·)
+            GetComponent<MeshRenderer>().enabled = false;
+
+            // РЈРЅРёС‡С‚РѕР¶Р°РµРј С‡РµСЂРµР· СЃРµРєСѓРЅРґСѓ (С‡С‚РѕР±С‹ СѓСЃРїРµР»Рё РїСЂРѕРёРіСЂР°С‚СЊСЃСЏ СЌС„С„РµРєС‚С‹)
+            Destroy(gameObject, 1f);
+
+            Debug.Log("вњ… РљСѓР± СЃРѕР±СЂР°РЅ!");
         }
     }
 }

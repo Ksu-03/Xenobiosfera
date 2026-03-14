@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 3894682561530901467}
   - component: {fileID: 3960419776882363608}
   - component: {fileID: 1826026196085099068}
+  - component: {fileID: 1743814711657041231}
   m_Layer: 0
   m_Name: Cube
   m_TagString: Cube
@@ -105,3 +106,19 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 5.499049, y: 3.7539885, z: 7.3392644}
   m_Center: {x: -0.19130072, y: 0.032074954, z: 0.30982098}
+--- !u!114 &1743814711657041231
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2886252219922996182}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a1f3eb17c16b3814983d40c7441a064a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  playerTag: Player
+  pickupEffect: {fileID: 0}
+  pickupSound: {fileID: 0}
+  rotationSpeed: 50

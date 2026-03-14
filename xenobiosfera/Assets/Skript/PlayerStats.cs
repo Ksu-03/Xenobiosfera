@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using System;
+using UnityEngine.UI;
 
 public class PlayerStats : MonoBehaviour
 {
@@ -15,34 +16,42 @@ public class PlayerStats : MonoBehaviour
     public float maxEnergy = 100f;
     public float energyDrainRate = 0.5f;
 
-    [Header("Здоровье")] // Добавили здоровье
+    [Header("Здоровье")]
     public float health = 100f;
     public float maxHealth = 100f;
 
     [Header("Респавн")]
-    public float respawnTime = 5f; // теперь 5 секунд (было 2)
+    public float respawnTime = 5f;
     public Vector3 respawnPosition;
+
+    [Header("UI")]
+    public GameObject gameOverPanel;
 
     [Header("Состояние")]
     public bool isDead = false;
 
     private PlayerController playerController;
+    private GameManager gameManager;
 
     void Start()
     {
         playerController = GetComponent<PlayerController>();
         respawnPosition = transform.position;
+        gameManager = FindObjectOfType<GameManager>();
+
+        if (gameOverPanel != null)
+            gameOverPanel.SetActive(false);
     }
 
     void Update()
     {
         if (isDead) return;
 
-        // --- КИСЛОРОД ---
+        // Кислород
         oxygen -= oxygenDrainRate * Time.deltaTime;
         oxygen = Mathf.Clamp(oxygen, 0, maxOxygen);
 
-        // --- ЭНЕРГИЯ ---
+        // Энергия
         float horizontal = Input.GetAxis("Horizontal");
         float vertical = Input.GetAxis("Vertical");
 
@@ -53,29 +62,17 @@ public class PlayerStats : MonoBehaviour
 
         energy = Mathf.Clamp(energy, 0, maxEnergy);
 
-       
         if (playerController != null)
         {
             playerController.canMove = (energy > 0 && !isDead);
         }
 
-        // --- ПРОВЕРКА НА СМЕРТЬ ---
-        if (oxygen <= 0 || health <= 0 || energy <= 0)
+        if (oxygen <= 0 || health <= 0)
         {
             Die();
         }
     }
 
-    private void OnTriggerEnter(Collider other)
-    {
-        if (other.gameObject.tag == "Enemy")
-        {
-            health -= 10;
-
-        }
-    }
-
-    // МЕТОД ДЛЯ ПОЛУЧЕНИЯ УРОНА - вызывать из мониторов
     public void TakeDamage(float amount)
     {
         if (isDead) return;
@@ -83,9 +80,6 @@ public class PlayerStats : MonoBehaviour
         health -= amount;
         health = Mathf.Clamp(health, 0, maxHealth);
 
-        Debug.Log($"💔 Получен урон: {amount}, Здоровье: {health}");
-
-        // Проверка на смерть от урона
         if (health <= 0)
         {
             Die();
@@ -99,30 +93,43 @@ public class PlayerStats : MonoBehaviour
         isDead = true;
         Debug.Log("💀 ПЕРСОНАЖ УМЕР");
 
-        // Отключаем управление
         if (playerController != null)
             playerController.enabled = false;
 
-        // Отключаем коллайдер
         Collider col = GetComponent<Collider>();
         if (col != null)
             col.enabled = false;
 
-        // Респавн через respawnTime секунд
-        Invoke("Respawn", respawnTime);
+        if (gameOverPanel != null)
+        {
+            gameOverPanel.SetActive(true);
+
+            Button[] buttons = gameOverPanel.GetComponentsInChildren<Button>();
+            foreach (Button btn in buttons)
+            {
+                btn.onClick.RemoveAllListeners();
+
+                if (btn.name.Contains("Restart") || btn.name.Contains("Заново"))
+                    btn.onClick.AddListener(Respawn);
+
+                if (btn.name.Contains("Exit") || btn.name.Contains("Выход"))
+                    btn.onClick.AddListener(ExitGame);
+            }
+        }
+
+        Time.timeScale = 0f;
     }
 
-    void Respawn()
+    public void Respawn()
     {
-        // Восстанавливаем всё
+        Time.timeScale = 1f;
+
         oxygen = maxOxygen;
         energy = maxEnergy;
-        health = maxHealth; // здоровье тоже восстанавливаем
+        health = maxHealth;
 
-        // Возвращаем на старт
         transform.position = respawnPosition;
 
-        // Включаем всё обратно
         if (playerController != null)
             playerController.enabled = true;
 
@@ -131,25 +138,38 @@ public class PlayerStats : MonoBehaviour
             col.enabled = true;
 
         isDead = false;
+
+        if (gameOverPanel != null)
+            gameOverPanel.SetActive(false);
+
         Debug.Log("✨ ПЕРСОНАЖ ВОСКРЕС");
+
+        // Возрождаем кубы
+        if (gameManager != null)
+        {
+            gameManager.RespawnAllCubes();
+        }
     }
 
-    // Методы для пополнения (капсулы)
+    void ExitGame()
+    {
+#if UNITY_EDITOR
+        UnityEditor.EditorApplication.isPlaying = false;
+#else
+            Application.Quit();
+#endif
+    }
+
     public void RestoreOxygen(float amount)
     {
         oxygen = Mathf.Clamp(oxygen + amount, 0, maxOxygen);
-        Debug.Log($"Кислород +{amount}");
     }
-
     public void RestoreEnergy(float amount)
     {
         energy = Mathf.Clamp(energy + amount, 0, maxEnergy);
-        Debug.Log($"Энергия +{amount}");
     }
-
-    public void RestoreHealth(float amount) // если будут аптечки
+    public void RestoreHealth(float amount)
     {
         health = Mathf.Clamp(health + amount, 0, maxHealth);
-        Debug.Log($"Здоровье +{amount}");
     }
 }

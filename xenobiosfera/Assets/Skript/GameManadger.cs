@@ -4,52 +4,109 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 
+
 public class GameManager : MonoBehaviour
 {
     [Header("Настройки кубов")]
-    public int totalCubes = 5; // сколько всего кубов на карте
+    public int totalCubes = 5;
     private int cubesCollected = 0;
 
-    [Header("UI Победы")]
-    public GameObject winPanel; // панель с текстом и кнопками
-    public Text winMessageText; // текст "Вы выиграли!"
-    public Button restartButton; // кнопка "Заново"
-    public Button exitButton; // кнопка "Выход"
+    [Header("Префабы")]
+    public GameObject cubePrefab;
+    public Transform[] cubeSpawnPoints;
 
-    [Header("UI Счетчик (опционально)")]
-    public Text cubesCounterText; // текст вида "Кубы: 0/5"
+    [Header("UI")]
+    public GameObject winPanel;
+    public Text cubesCounterText;
+    public Button restartButton;
+    public Button exitButton;
+
+    private List<GameObject> activeCubes = new List<GameObject>();
+
+    // Для отладки - запоминаем, какие кубы уже собраны
+    private List<string> collectedCubeIDs = new List<string>();
 
     void Start()
     {
-        // Сначала выключаем панель победы
         if (winPanel != null)
             winPanel.SetActive(false);
 
-        // Подключаем кнопки
         if (restartButton != null)
             restartButton.onClick.AddListener(RestartGame);
 
         if (exitButton != null)
             exitButton.onClick.AddListener(ExitGame);
 
-        // Обновляем счетчик
+        FindAllCubes();
+    }
+
+    void FindAllCubes()
+    {
+        activeCubes.Clear();
+        GameObject[] cubes = GameObject.FindGameObjectsWithTag("Cube");
+        foreach (GameObject cube in cubes)
+        {
+            activeCubes.Add(cube);
+        }
+
+        totalCubes = activeCubes.Count;
+        cubesCollected = 0;
+        collectedCubeIDs.Clear();
+
+        Debug.Log($"📊 Найдено кубов: {totalCubes}");
         UpdateCubesCounter();
     }
 
-    // Этот метод вызывается из куба, когда его собирают
     public void CollectCube()
     {
-        cubesCollected++;
-        Debug.Log($"Кубы: {cubesCollected}/{totalCubes}");
+        // Получаем имя объекта, который вызвал сбор (для отладки)
+        string cubeName = "неизвестно";
 
-        // Обновляем счетчик на экране
+        cubesCollected++;
+
+        // ПРОВЕРКА: не даем превысить общее количество
+        if (cubesCollected > totalCubes)
+        {
+            Debug.LogWarning($"⚠️ Попытка собрать больше кубов чем есть! {cubesCollected}/{totalCubes}");
+            cubesCollected = totalCubes;
+        }
+
+        Debug.Log($"📦 Собрано кубов: {cubesCollected}/{totalCubes}");
         UpdateCubesCounter();
 
-        // Проверяем, собраны ли все кубы
         if (cubesCollected >= totalCubes)
         {
             WinGame();
         }
+    }
+
+    public void RespawnAllCubes()
+    {
+        // Удаляем старые кубы
+        foreach (GameObject cube in activeCubes)
+        {
+            if (cube != null)
+                Destroy(cube);
+        }
+        activeCubes.Clear();
+
+        // Создаем новые кубы
+        if (cubePrefab != null && cubeSpawnPoints.Length > 0)
+        {
+            foreach (Transform spawnPoint in cubeSpawnPoints)
+            {
+                GameObject newCube = Instantiate(cubePrefab, spawnPoint.position, spawnPoint.rotation);
+                activeCubes.Add(newCube);
+            }
+        }
+
+        // Сбрасываем счетчик
+        cubesCollected = 0;
+        totalCubes = activeCubes.Count;
+        collectedCubeIDs.Clear();
+
+        UpdateCubesCounter();
+        Debug.Log($"🔄 Кубы возрождены! Всего: {totalCubes}");
     }
 
     void UpdateCubesCounter()
@@ -62,41 +119,29 @@ public class GameManager : MonoBehaviour
 
     void WinGame()
     {
-        Debug.Log("🎉 ПОБЕДА! Все кубы собраны!");
+        Debug.Log("🎉 ПОБЕДА!");
+        Time.timeScale = 0f;
 
-        // Останавливаем игру
-        Time.timeScale = 0f; // замораживаем время
-
-        // Показываем панель победы
         if (winPanel != null)
-        {
             winPanel.SetActive(true);
 
-            // Можно изменить текст
-            if (winMessageText != null)
-                winMessageText.text = "ВЫ ВЫИГРАЛИ!";
-        }
-
-        // Отключаем управление игроком
         PlayerController player = FindObjectOfType<PlayerController>();
         if (player != null)
             player.enabled = false;
     }
 
-    // Перезапуск игры
     public void RestartGame()
     {
-        Time.timeScale = 1f; // возвращаем время
-        SceneManager.LoadScene(SceneManager.GetActiveScene().name); // перезагружаем сцену
+        Time.timeScale = 1f;
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 
-    // Выход из игры
     public void ExitGame()
     {
 #if UNITY_EDITOR
-        UnityEditor.EditorApplication.isPlaying = false; // для редактора
+        UnityEditor.EditorApplication.isPlaying = false;
 #else
-            Application.Quit(); // для собранной игры
+            Application.Quit();
 #endif
     }
 }
